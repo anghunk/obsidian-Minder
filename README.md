@@ -45,7 +45,7 @@ Minder 是一个 Obsidian 插件，快速记录灵感、想法和小笔记的插
 笔记以 Markdown 文件形式存储在指定的文件夹中，每个笔记文件包含 YAML 前置元数据，记录笔记的 ID、创建时间、更新时间和标签信息。
 
 
-## 项目结构
+### 项目结构
 
 ```
 src/
@@ -63,3 +63,7 @@ src/
   ├── types.ts          # 类型定义
   └── settings.ts       # 设置组件
 ```
+
+### LINCENSE
+
+[Apache-2.0 license](./LICENSE)
