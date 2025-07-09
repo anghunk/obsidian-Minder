@@ -71,8 +71,7 @@ export class MemoEditor {
         // 取消按钮
         this.cancelButton = new ButtonComponent(buttonContainer);
         this.cancelButton
-            .setIcon('cross')
-            .setTooltip('取消')
+            .setButtonText('取消')
             .onClick(() => {
                 this.clear(); // 点击取消时清空内容
                 this.onCancelCallback();

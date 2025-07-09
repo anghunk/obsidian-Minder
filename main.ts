@@ -48,6 +48,13 @@ export default class MinderPlugin extends Plugin {
 		// 添加设置选项卡
 		this.addSettingTab(new MinderSettingTab(this.app, this));
 		
+		// 根据设置决定是否在启动时自动打开插件
+		if (this.settings.openOnStartup) {
+			// 使用setTimeout延迟执行，确保Obsidian完全加载后再打开插件
+			setTimeout(() => {
+				this.activateView();
+			}, 500);
+		}
 	}
 
 	onunload() {

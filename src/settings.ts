@@ -6,6 +6,7 @@ export const DEFAULT_SETTINGS: MinderSettings = {
     dateFormat: 'YYYY-MM-DD HH:mm:ss',
     displayCount: 50,
     defaultSort: 'createTime',
+    openOnStartup: false,
 };
 
 export class MinderSettingTab extends PluginSettingTab {
@@ -67,6 +68,16 @@ export class MinderSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.defaultSort)
                 .onChange(async (value: 'createTime' | 'updateTime') => {
                     this.plugin.settings.defaultSort = value;
+                    await this.plugin.saveSettings();
+                }));
+        
+        new Setting(containerEl)
+            .setName('软件启动时打开插件')
+            .setDesc('Obsidian启动时自动打开Minder插件')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.openOnStartup)
+                .onChange(async (value) => {
+                    this.plugin.settings.openOnStartup = value;
                     await this.plugin.saveSettings();
                 }));
     }

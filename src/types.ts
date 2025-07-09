@@ -9,6 +9,8 @@ export interface MinderSettings {
     displayCount: number;
     // 默认排序方式
     defaultSort: "createTime" | "updateTime";
+    // 软件启动时打开插件
+    openOnStartup: boolean;
 }
 
 export interface MemoItem {

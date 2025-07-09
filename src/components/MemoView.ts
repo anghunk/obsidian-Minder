@@ -108,9 +108,21 @@ export class MemoView extends ItemView {
 		// 标签栏
 		const tagsBarEl = containerEl.createDiv({ cls: "minder-tags-area" });
 		
+		// 按钮容器
+		const buttonsContainer = tagsBarEl.createDiv({ cls: "minder-buttons-container" });
+		
+		// 刷新按钮
+		const refreshButton = buttonsContainer.createDiv({ cls: "minder-refresh-button" });
+		setIcon(refreshButton, "refresh-cw");
+		refreshButton.setAttribute("aria-label", "刷新笔记");
+		refreshButton.addEventListener("click", async () => {
+			await this.refreshMemos();
+			await this.tagsBar?.refresh();
+			new Notice("笔记已刷新");
+		});
+		
 		// 搜索按钮
-		const searchButtonContainer = tagsBarEl.createDiv({ cls: "minder-search-button-container" });
-		this.searchButton = searchButtonContainer.createDiv({ cls: "minder-search-button" });
+		this.searchButton = buttonsContainer.createDiv({ cls: "minder-search-button" });
 		setIcon(this.searchButton, "search");
 		this.searchButton.setAttribute("aria-label", "搜索笔记");
 		this.searchButton.addEventListener("click", () => {
