@@ -324,9 +324,9 @@ export class MemoView extends ItemView {
 			if (memoEl) {
 				// 使用更平滑的滚动，不改变位置
 				memoEl.scrollIntoView({
-					behavior: "smooth",
+			behavior: "smooth",
 					block: "nearest" // 只在需要时滚动
-				});
+		});
 			}
 		}
 	}

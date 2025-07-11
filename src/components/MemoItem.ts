@@ -142,15 +142,15 @@ export class MemoItemComponent {
 
 		// 点击整个笔记项 (仅在非编辑状态下)
 		if (!this.isEditing) {
-			this.containerEl.addEventListener("click", () => {
-				this.onClickCallback(this.memo);
-			});
+		this.containerEl.addEventListener("click", () => {
+			this.onClickCallback(this.memo);
+		});
 
-			// 添加双击事件监听器，触发编辑功能
-			this.containerEl.addEventListener("dblclick", (event) => {
+		// 添加双击事件监听器，触发编辑功能
+		this.containerEl.addEventListener("dblclick", (event) => {
 				this.startInlineEditing();
-				event.stopPropagation();
-			});
+			event.stopPropagation();
+		});
 		}
 
 		return this.containerEl;
@@ -202,14 +202,9 @@ export class MemoItemComponent {
 				// 然后设置状态
 				this.setEditingState(false);
 				
-				// 重新渲染整个笔记项，包括标签
-				const parentEl = this.containerEl.parentElement;
-				if (parentEl) {
-					this.render(parentEl);
-				} else {
-					// 如果没有父元素，至少渲染内容
-					this.renderContent(this.contentEl);
-				}
+				// 只重新渲染内容和标签，不移动整个笔记的位置
+				this.renderContent(this.contentEl);
+				this.updateTagsSection();
 				
 				// 调用更新回调
 				this.onUpdateCallback(updatedMemo);
@@ -218,14 +213,9 @@ export class MemoItemComponent {
 				// 直接设置状态为非编辑，不保存任何更改
 				this.setEditingState(false);
 				
-				// 重新渲染整个笔记项，包括标签
-				const parentEl = this.containerEl.parentElement;
-				if (parentEl) {
-					this.render(parentEl);
-				} else {
-					// 如果没有父元素，至少渲染内容
-					this.renderContent(this.contentEl);
-				}
+				// 只重新渲染内容和标签，不移动整个笔记的位置
+				this.renderContent(this.contentEl);
+				this.updateTagsSection();
 			}
 		});
 		
@@ -236,6 +226,49 @@ export class MemoItemComponent {
 			setTimeout(() => {
 				this.inlineEditor?.focus();
 			}, 10);
+		}
+	}
+	
+	/**
+	 * 更新标签区域
+	 */
+	private updateTagsSection(): void {
+		// 找到现有的标签区域
+		const existingTagsEl = this.containerEl.querySelector('.minder-memo-tags');
+		
+		// 如果有标签且没有标签区域，添加标签区域
+		if (this.memo.tags.length > 0) {
+			// 如果已有标签区域，清空并重新填充
+			if (existingTagsEl) {
+				existingTagsEl.empty();
+				
+				// 添加新标签
+				this.memo.tags.forEach((tag) => {
+					const tagEl = existingTagsEl.createSpan({ cls: "minder-memo-tag" });
+					tagEl.setText("#" + tag);
+					tagEl.addEventListener("click", (event) => {
+						event.stopPropagation();
+					});
+				});
+			} 
+			// 如果没有标签区域但有标签，创建新的标签区域
+			else {
+				const tagsEl = this.containerEl.createDiv({
+					cls: "minder-memo-tags",
+				});
+	
+				this.memo.tags.forEach((tag) => {
+					const tagEl = tagsEl.createSpan({ cls: "minder-memo-tag" });
+					tagEl.setText("#" + tag);
+					tagEl.addEventListener("click", (event) => {
+						event.stopPropagation();
+					});
+				});
+			}
+		} 
+		// 如果没有标签但有标签区域，移除标签区域
+		else if (existingTagsEl) {
+			existingTagsEl.remove();
 		}
 	}
 	
@@ -355,13 +388,9 @@ export class MemoItemComponent {
 			// 如果内容为空或未更改，则不保存
 			if (!content.trim() || content === this.memo.content) {
 				this.setEditingState(false);
-				// 重新渲染整个笔记项
-				const parentEl = this.containerEl.parentElement;
-				if (parentEl) {
-					this.render(parentEl);
-				} else {
-					this.renderContent(this.contentEl);
-				}
+				// 只重新渲染内容和标签，不移动整个笔记的位置
+				this.renderContent(this.contentEl);
+				this.updateTagsSection();
 				return;
 			}
 			
@@ -373,14 +402,9 @@ export class MemoItemComponent {
 				// 设置为非编辑状态
 				this.setEditingState(false);
 				
-				// 重新渲染整个笔记项，包括标签
-				const parentEl = this.containerEl.parentElement;
-				if (parentEl) {
-					this.render(parentEl);
-				} else {
-					// 如果没有父元素，至少渲染内容
-					this.renderContent(this.contentEl);
-				}
+				// 只重新渲染内容和标签，不移动整个笔记的位置
+				this.renderContent(this.contentEl);
+				this.updateTagsSection();
 				
 				// 调用更新回调
 				this.onUpdateCallback(updatedMemo);
@@ -390,13 +414,8 @@ export class MemoItemComponent {
 			// 出错时，仍然退出编辑模式，但保留原内容
 			this.setEditingState(false);
 			
-			// 重新渲染整个笔记项
-			const parentEl = this.containerEl.parentElement;
-			if (parentEl) {
-				this.render(parentEl);
-			} else {
-				this.renderContent(this.contentEl);
-			}
+			// 只重新渲染内容，不移动整个笔记的位置
+			this.renderContent(this.contentEl);
 		}
 	}
 	
