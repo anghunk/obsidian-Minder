@@ -54,10 +54,16 @@ export class MemoEditor {
         this.textArea
             .setPlaceholder('输入你的想法...')
             .setValue(this.initialContent)
-            .onChange(() => this.previewTags());
+            .onChange(() => {
+                this.previewTags();
+                this.adjustTextareaHeight();
+            });
         
         this.textArea.inputEl.className = 'minder-editor-textarea';
         this.textArea.inputEl.focus();
+        
+        // 设置自动调整高度的事件
+        this.setupAutoResize();
         
         // 底部工具栏区域（包含标签预览和按钮）
         const bottomBarEl = this.containerEl.createDiv({ cls: 'minder-editor-bottom-bar' });
@@ -92,7 +98,42 @@ export class MemoEditor {
         // 初始化标签预览
         this.previewTags();
         
+        // 初始化时调整高度
+        this.adjustTextareaHeight();
+        
         return this.containerEl;
+    }
+    
+    /**
+     * 设置自动调整高度的事件监听
+     */
+    private setupAutoResize(): void {
+        if (!this.textArea || !this.textArea.inputEl) return;
+        
+        // 输入事件监听
+        this.textArea.inputEl.addEventListener('input', () => {
+            this.adjustTextareaHeight();
+        });
+        
+        // 窗口大小改变时也调整
+        window.addEventListener('resize', () => {
+            this.adjustTextareaHeight();
+        });
+    }
+    
+    /**
+     * 调整文本区域高度
+     */
+    private adjustTextareaHeight(): void {
+        if (!this.textArea || !this.textArea.inputEl) return;
+        
+        const textareaEl = this.textArea.inputEl;
+        
+        // 重置高度以获取正确的滚动高度
+        textareaEl.style.height = 'auto';
+        
+        // 设置新高度
+        textareaEl.style.height = textareaEl.scrollHeight + 'px';
     }
     
     /**
@@ -168,6 +209,9 @@ export class MemoEditor {
             if (this.cancelButton) {
                 this.cancelButton.buttonEl.style.display = 'none';
             }
+            
+            // 重置文本区域高度
+            this.adjustTextareaHeight();
         }
     }
     
@@ -186,6 +230,7 @@ export class MemoEditor {
         if (this.textArea) {
             this.textArea.setValue(content);
             this.previewTags();
+            this.adjustTextareaHeight();
         }
     }
     

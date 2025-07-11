@@ -7,12 +7,10 @@ import {
 	Modal,
 	Notice,
 	setIcon,
-	TextAreaComponent,
 } from "obsidian";
 import { MemoItem as MemoItemInterface } from "../types";
 import { MemoService } from "../services/memoService";
 import { formatDate, getRelativeTimeString } from "../utils/date";
-import { extractTagsFromContent } from "../utils/file";
 
 export interface MemoItemComponentOptions {
 	app: App;
@@ -38,9 +36,6 @@ export class MemoItemComponent {
 	private onClickCallback: (memo: MemoItemInterface) => void;
 	private component: Component | null;
 	private isEditing: boolean;
-	private textArea: TextAreaComponent | null = null;
-	private contentEl: HTMLElement | null = null;
-	private editButtonsEl: HTMLElement | null = null;
 
 	constructor(options: MemoItemComponentOptions) {
 		this.app = options.app;
@@ -93,6 +88,14 @@ export class MemoItemComponent {
 		// 操作按钮
 		const actionsEl = headerEl.createDiv({ cls: "minder-memo-actions" });
 
+		// 编辑标记
+		if (this.isEditing) {
+			const editingBadgeEl = actionsEl.createDiv({
+				cls: "minder-memo-editing-badge",
+			});
+			editingBadgeEl.setText("编辑中");
+		}
+
 		// 更多按钮
 		const moreButtonEl = actionsEl.createDiv({
 			cls: "minder-memo-action-button",
@@ -104,19 +107,13 @@ export class MemoItemComponent {
 		});
 
 		// 内容区域
-		this.contentEl = this.containerEl.createDiv({
+		const contentEl = this.containerEl.createDiv({
 			cls: "minder-memo-content",
 		});
-		
-		// 根据编辑状态渲染不同的内容
-		if (this.isEditing) {
-			this.renderEditView(this.contentEl);
-		} else {
-			this.renderReadView(this.contentEl);
-		}
+		this.renderContent(contentEl);
 
 		// 标签区域
-		if (this.memo.tags.length > 0 && !this.isEditing) {
+		if (this.memo.tags.length > 0) {
 			const tagsEl = this.containerEl.createDiv({
 				cls: "minder-memo-tags",
 			});
@@ -131,32 +128,26 @@ export class MemoItemComponent {
 			});
 		}
 
-		// 只有在非编辑模式下才添加点击和双击事件
-		if (!this.isEditing) {
-			// 点击整个笔记项
-			this.containerEl.addEventListener("click", () => {
-				if (!this.isEditing) {
-					this.onClickCallback(this.memo);
-				}
-			});
+		// 点击整个笔记项
+		this.containerEl.addEventListener("click", () => {
+			this.onClickCallback(this.memo);
+		});
 
-			// 添加双击事件监听器，切换到编辑模式
-			this.containerEl.addEventListener("dblclick", (event) => {
-				if (!this.isEditing) {
-					this.setEditingState(true);
-					event.stopPropagation();
-				}
-			});
-		}
+		// 添加双击事件监听器，触发编辑功能
+		this.containerEl.addEventListener("dblclick", (event) => {
+			this.setEditingState(true);
+			this.onEditCallback(this.memo);
+			event.stopPropagation();
+		});
 
 		return this.containerEl;
 	}
 
 	/**
-	 * 渲染阅读视图
+	 * 渲染笔记内容
 	 * @param containerEl 容器元素
 	 */
-	private renderReadView(containerEl: HTMLElement): void {
+	private renderContent(containerEl: HTMLElement): void {
 		containerEl.empty();
 
 		try {
@@ -181,141 +172,6 @@ export class MemoItemComponent {
 	}
 
 	/**
-	 * 渲染编辑视图
-	 * @param containerEl 容器元素
-	 */
-	private renderEditView(containerEl: HTMLElement): void {
-		containerEl.empty();
-
-		// 创建文本区域
-		const textAreaContainer = containerEl.createDiv({ cls: "minder-memo-edit-container" });
-		this.textArea = new TextAreaComponent(textAreaContainer);
-		this.textArea
-			.setPlaceholder("输入笔记内容...")
-			.setValue(this.memo.content)
-			.onChange(() => this.previewTags());
-		
-		this.textArea.inputEl.className = "minder-memo-edit-textarea";
-		this.textArea.inputEl.style.width = "100%";
-		this.textArea.inputEl.style.height = "auto";
-		this.textArea.inputEl.style.minHeight = "50px";
-		this.textArea.inputEl.focus();
-		
-		// 设置自动调整高度
-		this.setupAutoResize(this.textArea.inputEl);
-
-		// 标签预览区域
-		const tagPreviewEl = containerEl.createDiv({ cls: "minder-tag-preview" });
-		
-		// 编辑按钮区域
-		this.editButtonsEl = containerEl.createDiv({ cls: "minder-memo-edit-buttons" });
-		
-		// 取消按钮
-		const cancelButton = this.editButtonsEl.createEl("button", { 
-			cls: "minder-memo-edit-button minder-memo-cancel-button",
-			text: "取消"
-		});
-		cancelButton.addEventListener("click", (e) => {
-			this.setEditingState(false);
-			e.stopPropagation();
-		});
-		
-		// 保存按钮
-		const saveButton = this.editButtonsEl.createEl("button", { 
-			cls: "minder-memo-edit-button minder-memo-save-button",
-			text: "保存"
-		});
-		saveButton.addEventListener("click", (e) => {
-			this.saveMemo();
-			e.stopPropagation();
-		});
-
-		// 初始化标签预览
-		this.previewTags(tagPreviewEl);
-	}
-
-	/**
-	 * 设置文本区域自动调整高度
-	 * @param textArea 文本区域元素
-	 */
-	private setupAutoResize(textArea: HTMLTextAreaElement): void {
-		// 初始调整高度
-		this.adjustTextAreaHeight(textArea);
-		
-		// 监听输入事件
-		textArea.addEventListener('input', () => {
-			this.adjustTextAreaHeight(textArea);
-		});
-		
-		// 监听窗口大小变化
-		window.addEventListener('resize', () => {
-			this.adjustTextAreaHeight(textArea);
-		});
-	}
-	
-	/**
-	 * 调整文本区域高度以适应内容
-	 * @param textArea 文本区域元素
-	 */
-	private adjustTextAreaHeight(textArea: HTMLTextAreaElement): void {
-		// 重置高度，以便正确计算新高度
-		textArea.style.height = 'auto';
-		
-		// 设置高度为滚动高度
-		textArea.style.height = textArea.scrollHeight + 'px';
-	}
-
-	/**
-	 * 预览标签
-	 */
-	private previewTags(tagPreviewEl?: HTMLElement): void {
-		if (!this.textArea) return;
-		
-		const previewEl = tagPreviewEl || this.containerEl.querySelector(".minder-tag-preview");
-		if (!previewEl) return;
-		
-		previewEl.empty();
-		const content = this.textArea.getValue();
-		const tags = extractTagsFromContent(content);
-		
-		if (tags.length > 0) {
-			previewEl.createSpan({ text: '标签: ' });
-			
-			tags.forEach(tag => {
-				const tagEl = previewEl.createSpan({ cls: 'minder-tag-preview-item' });
-				tagEl.setText(tag);
-			});
-		}
-	}
-
-	/**
-	 * 保存笔记
-	 */
-	private async saveMemo(): Promise<void> {
-		if (!this.textArea) return;
-		
-		const content = this.textArea.getValue();
-		if (!content.trim()) {
-			new Notice("笔记内容不能为空");
-			return;
-		}
-		
-		try {
-			const updatedMemo = await this.memoService.updateMemo(this.memo.id, content);
-			if (updatedMemo) {
-				this.memo = updatedMemo;
-				this.setEditingState(false);
-				new Notice("笔记已保存");
-			} else {
-				throw new Error("更新笔记失败");
-			}
-		} catch (error) {
-			console.error("保存笔记失败:", error);
-			new Notice("保存笔记失败");
-		}
-	}
-
-	/**
 	 * 显示操作菜单
 	 * @param targetEl 触发菜单的元素
 	 * @param event 事件对象
@@ -329,6 +185,7 @@ export class MemoItemComponent {
 				.setIcon("pencil")
 				.onClick(() => {
 					this.setEditingState(true);
+					this.onEditCallback(this.memo);
 				});
 		});
 
@@ -395,16 +252,6 @@ export class MemoItemComponent {
 			} else {
 				this.containerEl.classList.remove("minder-memo-editing");
 			}
-			
-			// 如果有父元素，重新渲染
-			if (this.containerEl.parentElement) {
-				this.render(this.containerEl.parentElement);
-			}
-		}
-		
-		// 如果进入编辑状态，通知外部回调（用于同步状态）
-		if (isEditing) {
-			this.onEditCallback(this.memo);
 		}
 	}
 	

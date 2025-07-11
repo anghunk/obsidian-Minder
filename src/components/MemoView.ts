@@ -57,18 +57,24 @@ export class MemoView extends ItemView {
 		// 容器布局
 		containerEl.addClass("minder-container");
 
-		// 编辑器区域 - 只用于创建新笔记
+		// 编辑器区域
 		const editorEl = containerEl.createDiv({ cls: "minder-editor-area" });
 		this.editor = new MemoEditor({
 			app: this.app,
 			memoService: this.memoService,
 			placeholder: "输入你的想法...",
 			onSubmit: async (memo) => {
+				// 如果是编辑状态，需要清除编辑标记
+				if (this.currentEditingMemoId) {
+					// 重置编辑状态
+					this.clearEditingState();
+				}
 				await this.refreshMemos();
 				await this.tagsBar?.refresh();
 			},
 			onCancel: () => {
-				// 取消编辑 - 现在只针对新建笔记
+				// 取消编辑
+				this.clearEditingState();
 			},
 		});
 		this.editor.render(editorEl);
@@ -243,7 +249,7 @@ export class MemoView extends ItemView {
 					memoService: this.memoService,
 					dateFormat: this.settings.dateFormat,
 					showTimestamp: true, // 总是显示时间戳
-					onEdit: (memo) => this.handleMemoEdit(memo),
+					onEdit: (memo) => this.editMemo(memo),
 					onDelete: (memo) => this.deleteMemo(memo),
 					component: this, // 传递当前View组件给MemoItemComponent
 				});
@@ -273,20 +279,30 @@ export class MemoView extends ItemView {
 	}
 
 	/**
-	 * 处理笔记编辑状态变更
-	 * @param memo 正在编辑的笔记
+	 * 编辑笔记
+	 * @param memo 笔记
 	 */
-	handleMemoEdit(memo: MemoItem): void {
-		// 如果有其他笔记正在编辑，先取消其编辑状态
-		if (this.currentEditingMemoId && this.currentEditingMemoId !== memo.id) {
-			const prevMemoComponent = this.memoComponents.get(this.currentEditingMemoId);
-			if (prevMemoComponent) {
-				prevMemoComponent.setEditingState(false);
-			}
+	editMemo(memo: MemoItem): void {
+		// 清除之前的编辑状态
+		this.clearEditingState();
+
+		// 设置新的编辑状态
+		this.currentEditingMemoId = memo.id;
+
+		// 标记当前笔记为编辑状态
+		const memoComponent = this.memoComponents.get(memo.id);
+		if (memoComponent) {
+			memoComponent.setEditingState(true);
 		}
 
-		// 更新当前编辑的笔记ID
-		this.currentEditingMemoId = memo.id;
+		// 设置编辑器内容和状态
+		this.editor.setEditMode(memo);
+
+		// 滚动到编辑器
+		this.containerEl.querySelector(".minder-editor-area")?.scrollIntoView({
+			behavior: "smooth",
+			block: "center",
+		});
 	}
 
 	/**
@@ -297,7 +313,7 @@ export class MemoView extends ItemView {
 		try {
 			// 如果正在编辑，先清除编辑状态
 			if (this.currentEditingMemoId === memo.id) {
-				this.currentEditingMemoId = null;
+				this.clearEditingState();
 			}
 
 			await this.memoService.deleteMemo(memo.id);
@@ -307,6 +323,24 @@ export class MemoView extends ItemView {
 		} catch (error) {
 			console.error("删除笔记失败", error);
 			new Notice("删除笔记失败");
+		}
+	}
+
+	/**
+	 * 清除编辑状态
+	 */
+	clearEditingState(): void {
+		if (this.currentEditingMemoId) {
+			// 移除之前笔记的编辑状态
+			const prevMemoComponent = this.memoComponents.get(
+				this.currentEditingMemoId
+			);
+			if (prevMemoComponent) {
+				prevMemoComponent.setEditingState(false);
+			}
+
+			// 重置编辑ID
+			this.currentEditingMemoId = null;
 		}
 	}
 
