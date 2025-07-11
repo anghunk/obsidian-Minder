@@ -325,7 +325,8 @@ If your plugin does not need CSS, delete this file.
 
 /* 编辑中的笔记样式 */
 .minder-memo-item.minder-memo-editing {
-	opacity: 0.7;
+	/* 移除透明度，避免位置变化感 */
+	/* opacity: 0.7; */
 }
 
 .minder-memo-item.minder-memo-editing::before {
@@ -437,4 +438,49 @@ If your plugin does not need CSS, delete this file.
 	content: "✏️";
 	font-size: 24px;
 	margin-bottom: 10px;
+}
+
+/* 内联编辑器样式 */
+.minder-inline-editor {
+	width: 100%;
+}
+
+.minder-inline-editor-container {
+	width: 100%;
+}
+
+.minder-inline-editor-textarea {
+	width: 100%;
+	min-height: 60px;
+	resize: none;
+	padding: 10px 8px;
+	border-radius: 6px;
+	background: var(--background-primary);
+	font-size: 0.95em;
+	line-height: 1.5;
+	transition: border 0.2s ease, height 0.2s ease;
+	overflow: hidden;
+	border: none;
+	box-shadow: none;
+	font-family: inherit;
+}
+
+.minder-inline-editor-textarea:focus {
+	outline: none;
+}
+
+.minder-inline-editor-bottom-bar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 4px;
+	width: 100%;
+	padding: 0;
+}
+
+.minder-inline-editor-buttons {
+	display: flex;
+	gap: 8px;
+	justify-content: flex-end;
+	align-items: center;
 }

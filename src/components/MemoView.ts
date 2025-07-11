@@ -251,6 +251,21 @@ export class MemoView extends ItemView {
 					showTimestamp: true, // 总是显示时间戳
 					onEdit: (memo) => this.editMemo(memo),
 					onDelete: (memo) => this.deleteMemo(memo),
+					onUpdate: async (memo) => {
+						// 当笔记内容更新后，刷新标签栏
+						await this.tagsBar?.refresh();
+						
+						// 如果当前是标签视图，且笔记的标签发生了变化，可能需要重新加载笔记列表
+						if (this.currentViewType === ViewType.TAG && this.currentTag) {
+							// 检查更新后的笔记是否包含当前标签
+							const hasCurrentTag = memo.tags.includes(this.currentTag);
+							
+							// 如果不包含当前标签，则需要重新加载笔记列表
+							if (!hasCurrentTag) {
+								await this.refreshMemos();
+							}
+						}
+					},
 					component: this, // 传递当前View组件给MemoItemComponent
 				});
 
@@ -283,7 +298,17 @@ export class MemoView extends ItemView {
 	 * @param memo 笔记
 	 */
 	editMemo(memo: MemoItem): void {
-		// 清除之前的编辑状态
+		// 如果当前正在编辑其他笔记，先保存其更改
+		if (this.currentEditingMemoId && this.currentEditingMemoId !== memo.id) {
+			// 获取当前正在编辑的笔记组件
+			const currentEditingMemoComponent = this.memoComponents.get(this.currentEditingMemoId);
+			if (currentEditingMemoComponent) {
+				// 获取内联编辑器实例并触发保存操作
+				currentEditingMemoComponent.saveCurrentEdit();
+			}
+		}
+
+		// 清除之前的编辑状态标记
 		this.clearEditingState();
 
 		// 设置新的编辑状态
@@ -293,16 +318,17 @@ export class MemoView extends ItemView {
 		const memoComponent = this.memoComponents.get(memo.id);
 		if (memoComponent) {
 			memoComponent.setEditingState(true);
+			
+			// 确保笔记在视野中
+			const memoEl = memoComponent.getContainerEl();
+			if (memoEl) {
+				// 使用更平滑的滚动，不改变位置
+				memoEl.scrollIntoView({
+					behavior: "smooth",
+					block: "nearest" // 只在需要时滚动
+				});
+			}
 		}
-
-		// 设置编辑器内容和状态
-		this.editor.setEditMode(memo);
-
-		// 滚动到编辑器
-		this.containerEl.querySelector(".minder-editor-area")?.scrollIntoView({
-			behavior: "smooth",
-			block: "center",
-		});
 	}
 
 	/**

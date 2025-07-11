@@ -11,6 +11,7 @@ import {
 import { MemoItem as MemoItemInterface } from "../types";
 import { MemoService } from "../services/memoService";
 import { formatDate, getRelativeTimeString } from "../utils/date";
+import { InlineMemoEditor } from "./InlineMemoEditor";
 
 export interface MemoItemComponentOptions {
 	app: App;
@@ -21,6 +22,7 @@ export interface MemoItemComponentOptions {
 	onEdit?: (memo: MemoItemInterface) => void;
 	onDelete?: (memo: MemoItemInterface) => void;
 	onClick?: (memo: MemoItemInterface) => void;
+	onUpdate?: (memo: MemoItemInterface) => void; // 新增：当笔记更新时的回调
 	component?: Component; // 用于Markdown渲染的组件引用
 }
 
@@ -29,13 +31,16 @@ export class MemoItemComponent {
 	private memo: MemoItemInterface;
 	private memoService: MemoService;
 	private containerEl: HTMLElement;
+	private contentEl: HTMLElement;
 	private dateFormat: string;
 	private showTimestamp: boolean;
 	private onEditCallback: (memo: MemoItemInterface) => void;
 	private onDeleteCallback: (memo: MemoItemInterface) => void;
 	private onClickCallback: (memo: MemoItemInterface) => void;
+	private onUpdateCallback: (memo: MemoItemInterface) => void; // 新增：当笔记更新时的回调
 	private component: Component | null;
 	private isEditing: boolean;
+	private inlineEditor: InlineMemoEditor | null = null;
 
 	constructor(options: MemoItemComponentOptions) {
 		this.app = options.app;
@@ -46,6 +51,7 @@ export class MemoItemComponent {
 		this.onEditCallback = options.onEdit || (() => {});
 		this.onDeleteCallback = options.onDelete || (() => {});
 		this.onClickCallback = options.onClick || (() => {});
+		this.onUpdateCallback = options.onUpdate || (() => {}); // 新增：当笔记更新时的回调
 		this.component = options.component || null;
 		this.isEditing = false;
 
@@ -107,10 +113,16 @@ export class MemoItemComponent {
 		});
 
 		// 内容区域
-		const contentEl = this.containerEl.createDiv({
+		this.contentEl = this.containerEl.createDiv({
 			cls: "minder-memo-content",
 		});
-		this.renderContent(contentEl);
+		
+		// 如果处于编辑状态，渲染内联编辑器
+		if (this.isEditing) {
+			this.renderInlineEditor();
+		} else {
+			this.renderContent(this.contentEl);
+		}
 
 		// 标签区域
 		if (this.memo.tags.length > 0) {
@@ -128,17 +140,18 @@ export class MemoItemComponent {
 			});
 		}
 
-		// 点击整个笔记项
-		this.containerEl.addEventListener("click", () => {
-			this.onClickCallback(this.memo);
-		});
+		// 点击整个笔记项 (仅在非编辑状态下)
+		if (!this.isEditing) {
+			this.containerEl.addEventListener("click", () => {
+				this.onClickCallback(this.memo);
+			});
 
-		// 添加双击事件监听器，触发编辑功能
-		this.containerEl.addEventListener("dblclick", (event) => {
-			this.setEditingState(true);
-			this.onEditCallback(this.memo);
-			event.stopPropagation();
-		});
+			// 添加双击事件监听器，触发编辑功能
+			this.containerEl.addEventListener("dblclick", (event) => {
+				this.startInlineEditing();
+				event.stopPropagation();
+			});
+		}
 
 		return this.containerEl;
 	}
@@ -170,6 +183,75 @@ export class MemoItemComponent {
 			errorP.textContent = this.memo.content;
 		}
 	}
+	
+	/**
+	 * 渲染内联编辑器
+	 */
+	private renderInlineEditor(): void {
+		if (!this.contentEl) return;
+		
+		this.contentEl.empty();
+		
+		this.inlineEditor = new InlineMemoEditor({
+			app: this.app,
+			memoService: this.memoService,
+			memo: this.memo,
+			onSubmit: (updatedMemo) => {
+				// 先更新数据
+				this.memo = updatedMemo;
+				// 然后设置状态
+				this.setEditingState(false);
+				
+				// 重新渲染整个笔记项，包括标签
+				const parentEl = this.containerEl.parentElement;
+				if (parentEl) {
+					this.render(parentEl);
+				} else {
+					// 如果没有父元素，至少渲染内容
+					this.renderContent(this.contentEl);
+				}
+				
+				// 调用更新回调
+				this.onUpdateCallback(updatedMemo);
+			},
+			onCancel: () => {
+				// 直接设置状态为非编辑，不保存任何更改
+				this.setEditingState(false);
+				
+				// 重新渲染整个笔记项，包括标签
+				const parentEl = this.containerEl.parentElement;
+				if (parentEl) {
+					this.render(parentEl);
+				} else {
+					// 如果没有父元素，至少渲染内容
+					this.renderContent(this.contentEl);
+				}
+			}
+		});
+		
+		this.inlineEditor.render(this.contentEl);
+		
+		// 确保编辑器获得焦点
+		if (this.inlineEditor) {
+			setTimeout(() => {
+				this.inlineEditor?.focus();
+			}, 10);
+		}
+	}
+	
+	/**
+	 * 开始内联编辑
+	 */
+	private startInlineEditing(): void {
+		// 首先通知父组件，这将触发保存其他正在编辑的笔记
+		this.onEditCallback(this.memo);
+		
+		// 设置编辑状态
+		this.setEditingState(true);
+		
+		// 直接渲染内联编辑器，而不是重新渲染整个组件
+		this.renderInlineEditor();
+	}
 
 	/**
 	 * 显示操作菜单
@@ -184,8 +266,7 @@ export class MemoItemComponent {
 			item.setTitle("编辑")
 				.setIcon("pencil")
 				.onClick(() => {
-					this.setEditingState(true);
-					this.onEditCallback(this.memo);
+					this.startInlineEditing();
 				});
 		});
 
@@ -234,8 +315,9 @@ export class MemoItemComponent {
 	update(memo: MemoItemInterface): void {
 		this.memo = memo;
 
-		if (this.containerEl.parentElement) {
-			this.render(this.containerEl.parentElement);
+		const parentEl = this.containerEl.parentElement;
+		if (parentEl) {
+			this.render(parentEl);
 		}
 	}
 
@@ -251,6 +333,69 @@ export class MemoItemComponent {
 				this.containerEl.classList.add("minder-memo-editing");
 			} else {
 				this.containerEl.classList.remove("minder-memo-editing");
+				this.inlineEditor = null;
+			}
+		}
+	}
+	
+	/**
+	 * 保存当前编辑内容
+	 * 如果当前处于编辑状态，则保存更改
+	 */
+	async saveCurrentEdit(): Promise<void> {
+		// 如果不在编辑状态或没有内联编辑器，则不执行任何操作
+		if (!this.isEditing || !this.inlineEditor) {
+			return;
+		}
+		
+		try {
+			// 获取当前编辑器的内容
+			const content = this.inlineEditor.getContent();
+			
+			// 如果内容为空或未更改，则不保存
+			if (!content.trim() || content === this.memo.content) {
+				this.setEditingState(false);
+				// 重新渲染整个笔记项
+				const parentEl = this.containerEl.parentElement;
+				if (parentEl) {
+					this.render(parentEl);
+				} else {
+					this.renderContent(this.contentEl);
+				}
+				return;
+			}
+			
+			// 调用服务更新笔记
+			const updatedMemo = await this.memoService.updateMemo(this.memo.id, content);
+			if (updatedMemo) {
+				// 更新本地数据
+				this.memo = updatedMemo;
+				// 设置为非编辑状态
+				this.setEditingState(false);
+				
+				// 重新渲染整个笔记项，包括标签
+				const parentEl = this.containerEl.parentElement;
+				if (parentEl) {
+					this.render(parentEl);
+				} else {
+					// 如果没有父元素，至少渲染内容
+					this.renderContent(this.contentEl);
+				}
+				
+				// 调用更新回调
+				this.onUpdateCallback(updatedMemo);
+			}
+		} catch (error) {
+			console.error("保存笔记时出错:", error);
+			// 出错时，仍然退出编辑模式，但保留原内容
+			this.setEditingState(false);
+			
+			// 重新渲染整个笔记项
+			const parentEl = this.containerEl.parentElement;
+			if (parentEl) {
+				this.render(parentEl);
+			} else {
+				this.renderContent(this.contentEl);
 			}
 		}
 	}
@@ -311,5 +456,13 @@ export class MemoItemComponent {
 		
 		// 打开对话框
 		confirmModal.open();
+	}
+
+	/**
+	 * 获取容器元素
+	 * @returns 容器元素
+	 */
+	getContainerEl(): HTMLElement {
+		return this.containerEl;
 	}
 }
