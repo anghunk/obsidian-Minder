@@ -299,48 +299,90 @@ If your plugin does not need CSS, delete this file.
 	padding: 16px;
 	background: var(--background-primary);
 	border-radius: 10px;
-	width: 100%;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-	border: 1px solid var(--background-modifier-border);
+	margin-bottom: 16px;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 	transition: all 0.2s ease;
 	position: relative;
+	border-left: 3px solid transparent;
+	cursor: pointer;
 }
 
 .minder-memo-item:hover {
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-	transform: translateY(-1px);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	border-left-color: var(--interactive-accent);
 }
 
-.minder-memo-item::before {
-	content: '';
-	position: absolute;
-	left: 0;
-	top: 0;
-	bottom: 0;
-	width: 4px;
-	background: var(--interactive-accent);
-	border-radius: 4px 0 0 4px;
-}
-
-/* 编辑中的笔记样式 */
+/* 编辑状态样式 */
 .minder-memo-item.minder-memo-editing {
-	opacity: 0.7;
+	border-left-color: var(--interactive-accent);
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+	background: var(--background-secondary);
 }
 
 .minder-memo-item.minder-memo-editing::before {
-	background: var(--text-warning);
+	background-color: var(--interactive-accent);
 }
 
-.minder-memo-editing-badge {
-	display: inline-flex;
-	align-items: center;
-	padding: 3px 8px;
-	background-color: var(--text-warning);
-	color: var(--background-primary);
-	font-size: 10px;
+/* 原地编辑相关样式 */
+.minder-memo-edit-container {
+	width: 100%;
+	margin-bottom: 10px;
+}
+
+.minder-memo-edit-textarea {
+	width: 100%;
+	min-height: 50px;
+	padding: 0;
+	border-radius: 6px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+	font-size: 0.95em;
+	line-height: 1.5;
+	resize: none;
+	transition: all 0.2s ease;
+	background: none;
+	border: none;
+	outline: none;
+	overflow: hidden;
+}
+
+.minder-memo-edit-textarea:focus {
+	border-color: var(--interactive-accent);
+	outline: none;
+	box-shadow: none;
+}
+
+.minder-memo-edit-buttons {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+}
+
+.minder-memo-edit-button {
+	padding: 6px 12px;
 	border-radius: 4px;
-	margin-right: 8px;
-	font-weight: 500;
+	border: none;
+	cursor: pointer;
+	font-size: 14px;
+	transition: all 0.2s ease;
+}
+
+.minder-memo-cancel-button {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.minder-memo-cancel-button:hover {
+	background: var(--background-modifier-hover-hover);
+}
+
+.minder-memo-save-button {
+	background: var(--interactive-accent) !important;
+	color: var(--text-on-accent) !important;
+}
+
+.minder-memo-save-button:hover {
+	background: var(--interactive-accent-hover);
 }
 
 .minder-memo-header {
@@ -385,7 +427,6 @@ If your plugin does not need CSS, delete this file.
 }
 
 .minder-memo-content {
-	margin-bottom: 12px;
 	user-select: text;
 	line-height: 1.5;
 	font-size: 0.95em;
