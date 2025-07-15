@@ -1,7 +1,7 @@
 {
 	"name": "obsidian-Minder",
-	"version": "1.0.2",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"version": "1.0.3",
+	"description": "A plugin for quickly recording inspirations, ideas, and small notes, with support for tag organization and searching",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
