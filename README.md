@@ -16,7 +16,7 @@ Minder 是一个 Obsidian 插件，快速记录灵感、想法和小笔记的插
 
 > 注：该项目暂未上架 Obsidian 插件商店
 
-1. 从 [GitHub Releases](https://github.com/ezyshu/obsidian-Minder/releases) 页面下载最新版本的以下文件：
+1. 从 [GitHub Releases](https://github.com/anghunk/obsidian-Minder/releases) 页面下载最新版本的以下文件：
    - main.js
    - manifest.json
    - styles.css
@@ -27,7 +27,7 @@ Minder 是一个 Obsidian 插件，快速记录灵感、想法和小笔记的插
 
 **或者使用 [BRAT 插件](https://github.com/TfTHacker/obsidian42-brat) 安装：**
 1. 安装 BRAT 插件
-2. 在 BRAT 设置中添加本插件仓库路径：`ezyshu/obsidian-Minder`
+2. 在 BRAT 设置中添加本插件仓库路径：`anghunk/obsidian-Minder`
 3. 启用 Minder 插件
 
 **视图切换**
