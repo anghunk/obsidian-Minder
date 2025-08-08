@@ -90,10 +90,17 @@ If your plugin does not need CSS, delete this file.
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+.minder-refresh-button svg {
+	transition: all 0.2s linear;
+}
+
 .minder-refresh-button:hover {
 	background: var(--background-modifier-hover);
+}
+
+.minder-refresh-button:hover svg {
 	color: var(--text-normal);
-	transform: rotate(180deg);
+	transform: rotate(90deg);
 }
 
 .minder-search-button {
@@ -142,8 +149,8 @@ If your plugin does not need CSS, delete this file.
 	font-size: 0.95em;
 	line-height: 1.5;
 	transition: border 0.2s ease, height 0.2s ease;
-    border: none;
-    background: none;
+	border: none;
+	background: none;
 	overflow: hidden;
 }
 
@@ -234,10 +241,6 @@ If your plugin does not need CSS, delete this file.
 	transition: all 0.2s ease;
 }
 
-.minder-tag-preview-item:hover {
-	background: var(--background-modifier-hover-hover);
-}
-
 /* 标签栏样式 */
 .minder-tags-area {
 	padding: 10px 0;
@@ -248,7 +251,7 @@ If your plugin does not need CSS, delete this file.
 	scrollbar-width: thin;
 	scrollbar-color: var(--scrollbar-thumb-bg) transparent;
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 }
 
 .minder-tags-bar {
@@ -309,7 +312,6 @@ If your plugin does not need CSS, delete this file.
 
 .minder-memo-item:hover {
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-	transform: translateY(-1px);
 }
 
 .minder-memo-item::before {
@@ -391,6 +393,25 @@ If your plugin does not need CSS, delete this file.
 	user-select: text;
 	line-height: 1.5;
 	font-size: 0.95em;
+}
+
+.minder-memo-content pre {
+	background: #eee;
+	position: relative;
+	border-radius: 3px;
+	padding: 6px;
+}
+
+.minder-memo-content code {
+	background: #eee;
+	border-radius: 3px;
+	padding: 3px
+}
+
+.copy-code-button {
+	position: absolute;
+	right: 0;
+	top: 0;
 }
 
 .minder-memo-content p {
