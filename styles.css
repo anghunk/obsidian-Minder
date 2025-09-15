@@ -154,8 +154,13 @@ If your plugin does not need CSS, delete this file.
 	overflow: hidden;
 }
 
+.minder-editor-textarea:hover {
+	background: none;
+}
+
 .minder-editor-textarea:focus {
 	border-color: var(--interactive-accent);
+	background: none;
 	outline: none;
 }
 
@@ -484,10 +489,18 @@ If your plugin does not need CSS, delete this file.
 	border: none;
 	box-shadow: none;
 	font-family: inherit;
+	border: 2px solid #ccc;
+	outline: none;
+	box-shadow: none !important;
+}
+
+.minder-inline-editor-textarea:hover {
+	border-color: #ccc;
 }
 
 .minder-inline-editor-textarea:focus {
 	outline: none;
+	border-color: #000;
 }
 
 .minder-inline-editor-bottom-bar {
