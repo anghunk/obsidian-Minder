@@ -19,6 +19,20 @@ If your plugin does not need CSS, delete this file.
 	overflow-y: auto;
 }
 
+/* 手机端适配：新版移动端 App 为全面屏布局，视图内容会延伸到状态栏下方，
+   顶部需预留安全区高度，避免整体过于靠上 */
+body.is-phone .minder-container {
+	padding-top: max(
+		calc(var(--file-margins, 32px) + 12px),
+		calc(env(safe-area-inset-top, 0px) + 12px)
+	);
+	/* 底部浮动导航栏会盖在内容上，一并预留空间 */
+	padding-bottom: max(
+		calc(var(--file-margins, 32px) + 16px),
+		calc(env(safe-area-inset-bottom, 0px) + 64px)
+	);
+}
+
 /* 顶部栏样式 */
 .minder-top-bar {
 	display: flex;
